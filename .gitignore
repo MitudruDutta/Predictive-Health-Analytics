@@ -1,0 +1,28 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Local environments
+.env
+.venv/
+venv/
+env/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Local tooling state
+.codex
+catboost_info/
+
+# Generated artifacts
+outputs/
+
+# Raw local data files
+data/*.csv
+!data/readme.txt
