@@ -26,11 +26,13 @@ python scripts/01_target_screening.py
 python scripts/02_etl_diabetes_datasets.py
 python scripts/03_train_baseline_models.py
 python scripts/04_train_richer_catboost.py
+python scripts/05_tune_richer_catboost.py
 python scripts/train_diabetes_model.py
 ```
 
 ## Documentation map
 
+- `docs/07-step-by-step-understanding-guide.md`
 - `docs/00-workflow-map.md`
 - `docs/01-problem-statement-and-topic-choice.md`
 - `docs/02-dataset-audit-and-screening.md`

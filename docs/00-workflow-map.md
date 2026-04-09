@@ -16,7 +16,10 @@ This project is now split into separate stages so the assignment can be explaine
 4. `scripts/04_train_richer_catboost.py`
    - trains the stronger richer-feature model
    - saves CatBoost diagnostics and the improved score
-5. `scripts/train_diabetes_model.py`
+5. `scripts/05_tune_richer_catboost.py`
+   - runs a focused tuning sweep on the richer CatBoost model
+   - documents whether any meaningful score headroom remains
+6. `scripts/train_diabetes_model.py`
    - runs the full final pipeline and writes the consolidated final artifacts used in the report
 
 ## Why this structure was created
@@ -39,6 +42,7 @@ The reusable logic lives in the `predictive_health/` package:
 
 ## Main documentation files
 
+- `docs/07-step-by-step-understanding-guide.md` for the most detailed teaching-style explanation
 - `docs/01-problem-statement-and-topic-choice.md`
 - `docs/02-dataset-audit-and-screening.md`
 - `docs/03-etl-and-cleaning.md`
@@ -46,4 +50,3 @@ The reusable logic lives in the `predictive_health/` package:
 - `docs/05-baseline-model-training.md`
 - `docs/06-model-improvement-and-final-score.md`
 - `docs/predictive-health-analysis.md`
-
