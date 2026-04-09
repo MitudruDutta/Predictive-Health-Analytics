@@ -1,5 +1,15 @@
 # Predictive Health: Lifestyle and Chronic Disease
 
+This file is the consolidated report. The same workflow is also documented step by step in:
+
+- `docs/00-workflow-map.md`
+- `docs/01-problem-statement-and-topic-choice.md`
+- `docs/02-dataset-audit-and-screening.md`
+- `docs/03-etl-and-cleaning.md`
+- `docs/04-feature-engineering.md`
+- `docs/05-baseline-model-training.md`
+- `docs/06-model-improvement-and-final-score.md`
+
 ## 1. Why this topic was chosen
 
 This topic is a strong data science assignment topic because it sits at the intersection of public health relevance, interpretable modeling, and actionable predictors.
