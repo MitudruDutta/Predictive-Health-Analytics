@@ -26,3 +26,5 @@ outputs/
 # Raw local data files
 data/*.csv
 !data/readme.txt
+
+graphify-out/
