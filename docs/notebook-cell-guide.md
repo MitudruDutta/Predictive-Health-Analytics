@@ -1,8 +1,10 @@
 # Notebook Cell-by-Cell Guide — Full Explanation
 
-> Detailed companion for `notebooks/predictive_health_pipeline.ipynb`.
-> Covers what each cell does, how the code works, the mathematical basis
-> behind every technique, and how to explain it to a professor.
+> Detailed companion for `predictive_health_pipeline.ipynb`.
+> The notebook is **self-contained** — all helper functions, constants, and
+> feature-engineering logic are defined inline (no external package imports).
+> This guide covers what each cell does, how the code works, the mathematical
+> basis behind every technique, and how to explain it to a professor.
 
 ---
 
@@ -16,36 +18,67 @@ States the project goal:
 
 ---
 
-## Section 0 — Setup
+## Section 0 — Setup (Cells 1–16)
 
-### Cell 2 (Code) — Imports and project root
+Since the notebook is standalone, all setup is done inline. The 614 lines of
+setup code are split into **8 logical code cells** with markdown headers:
 
-```python
-import sys, numpy as np, pandas as pd, matplotlib.pyplot as plt
-```
+### Cell 2 (Code) — Imports
 
-**How it works:** Standard Python data-science stack.
-- `numpy` — numerical arrays and math operations
-- `pandas` — tabular data (DataFrames)
-- `matplotlib` — plotting
+Standard Python data-science stack: `numpy`, `pandas`, `matplotlib`, `sklearn`,
+`catboost`. All imports are collected in one place for clarity.
 
-The project root detection (`Path.cwd()`) finds where the `predictive_health/` package lives so that `import predictive_health` works regardless of which directory Jupyter is launched from.
+### Cell 3 (Code) — Constants
 
-### Cell 3 (Code) — Config
-
-Loads constants from `predictive_health/config.py`:
+Defines the three key constants used throughout:
 
 | Constant | Value | Purpose |
 |---|---|---|
-| `RANDOM_STATE` | 42 | Seed for all random number generators. Ensures exact reproducibility — every run produces identical train/test splits, CV folds, and model weights. |
+| `DATA_PATH` | `adult24.csv` | Path to the NHIS 2024 CSV (must be in same directory as notebook) |
+| `RANDOM_STATE` | 42 | Seed for all random number generators. Ensures exact reproducibility. |
 | `THRESHOLDS` | [0.5, 0.4, 0.3] | Decision boundaries for the threshold sweep. |
-| `TARGET_COLS` | 6 columns | The candidate disease targets we screen in Section 2. |
+
+### Cell 4 (Code) — Column definitions & NHIS sentinel-code map
+
+Defines which columns to read from the CSV, and the `MISSING_CODE_MAP` that
+maps NHIS special codes (7=refused, 8=not ascertained, 9=don't know) to NaN.
+Also defines three feature set groupings for the comparison in Section 2.
+
+### Cell 6 (Code) — Data loading helpers
+
+`load_raw_data(columns)` — reads selected CSV columns and replaces sentinel
+codes with NaN. `load_screening_frame()` — convenience wrapper.
+
+### Cell 8 (Code) — Target screening helpers
+
+`screen_candidate_targets()`, `compare_feature_sets()`, etc. — functions used
+in Section 2 to evaluate which disease target is most predictable.
+
+### Cell 10 (Code) — Feature engineering functions
+
+12 small transform functions that map raw NHIS codes to human-readable
+categories (e.g., `bmi_group(3)` → `"overweight"`).
+
+### Cell 12 (Code) — Dataset builders (ETL)
+
+`build_baseline_diabetes_dataset()` and `build_richer_diabetes_dataset()` —
+read the CSV, apply feature transforms, and return clean DataFrames.
+
+### Cell 14 (Code) — Model-building helpers
+
+`build_preprocessor()`, `evaluate_baseline_models()` — sklearn preprocessing
+pipeline and the baseline model training/evaluation loop.
+
+### Cell 16 (Code) — CatBoost helpers
+
+`prepare_catboost_frame()`, `build_catboost_model()`, `fit_and_evaluate_catboost()`
+— CatBoost-specific utilities for data prep, model creation, CV, and evaluation.
 
 ---
 
 ## Section 1 — Raw Data Load & Audit
 
-### Cell 5 (Code) — Load screening frame
+### Cell 18 (Code) — Load screening frame
 
 ```python
 screening_df = load_screening_frame()
@@ -69,7 +102,7 @@ screening_df = load_screening_frame()
 
 **Output:** 32,629 rows × 17 columns.
 
-### Cell 6 (Code) — Missingness check
+### Cell 19 (Code) — Missingness check
 
 ```python
 selected_feature_missingness(screening_df) * 100
@@ -79,7 +112,7 @@ selected_feature_missingness(screening_df) * 100
 
 **Why this matters:** If a feature is >20-30% missing, it may be unreliable. Here, the worst is 4.14% (food security) — all features are usable. Standard imputation (filling missing values) will handle the rest.
 
-### Cell 8 (Code) — Sentinel age check (Section 1a)
+### Cell 21 (Code) — Sentinel age check (Section 1a)
 
 ```python
 bad_age = age_raw['AGEP_A'].isin([97, 98, 99])
@@ -93,7 +126,7 @@ bad_age = age_raw['AGEP_A'].isin([97, 98, 99])
 
 ## Section 1b — Exploratory Data Analysis
 
-### Cell 10 (Code) — Three EDA plots
+### Cell 23 (Code) — Three EDA plots
 
 **Plot 1 — Target class distribution:**
 
@@ -130,7 +163,7 @@ This is a clear **dose-response** relationship — the heavier the BMI category,
 
 ## Section 2 — Target Screening
 
-### Cell 12 (Code) — Screen 5 candidate targets
+### Cell 25 (Code) — Screen 5 candidate targets
 
 ```python
 target_screening = screen_candidate_targets(screening_df)
@@ -183,7 +216,7 @@ The ROC curve plots **True Positive Rate** (TPR = TP/(TP+FN), also called recall
 - AUC = 1.0 → model perfectly separates the classes
 - AUC = 0.78 (our result) → the model ranks a randomly chosen diabetic above a randomly chosen non-diabetic 78% of the time
 
-### Cell 13 (Code) — Feature set comparison
+### Cell 26 (Code) — Feature set comparison
 
 Tests three feature groupings on two targets:
 
@@ -199,7 +232,7 @@ Tests three feature groupings on two targets:
 
 ## Section 3 — Feature Engineering (ETL)
 
-### Cell 15 (Code) — Build engineered datasets
+### Cell 28 (Code) — Build engineered datasets
 
 ```python
 baseline_df = build_baseline_diabetes_dataset()
@@ -246,7 +279,7 @@ def bmi_group(value):
 
 The richer set upgrades binary `ever_smoked` to a 4-level `smoking_status` by combining two survey variables — current smokers have different risk than former smokers.
 
-### Cell 16 (Code) — Richer missingness
+### Cell 29 (Code) — Richer missingness
 
 Same `isna().mean()` calculation as before, now on the engineered features. All under 5%.
 
@@ -256,7 +289,7 @@ Same `isna().mean()` calculation as before, now on the engineered features. All 
 
 **Why we don't use it in model training:** Our goal is **individual-level prediction** ("does this person have diabetes?"), not **population-level inference** ("what fraction of Americans have diabetes?"). Survey weights are for the latter. Instead, we handle class imbalance with `class_weight='balanced'`, which reweights the loss function by inverse class frequency.
 
-### Cell 19 (Code) — Leakage check (Section 3a)
+### Cell 32 (Code) — Leakage check (Section 3a)
 
 **What is data leakage?** When information from the target variable leaks into the features. For example, if "takes insulin" were a feature, it would perfectly predict diabetes — but that's circular, not a real prediction.
 
@@ -266,7 +299,7 @@ The check groups by each feature value and computes the diabetes rate. If any gr
 
 ## Section 4 — Baseline Models
 
-### Cell 21 (Code) — Train and evaluate
+### Cell 34 (Code) — Train and evaluate
 
 **Three models, each with a purpose:**
 
@@ -316,7 +349,7 @@ Categorical (everything else):
 
 **Why OneHotEncoder?** Categorical features like BMI group have no natural ordering (is "overweight" > "under_or_healthy"?). One-hot encoding creates a separate binary column for each category, so the model can learn independent weights for each.
 
-### Cell 22 (Code) — Overfitting check
+### Cell 35 (Code) — Overfitting check
 
 ```python
 gap = cv_roc_auc - test_roc_auc
@@ -326,7 +359,7 @@ gap = cv_roc_auc - test_roc_auc
 
 A small positive gap (~0.01) is normal and healthy — it means the model generalises well. A gap >0.05 would be concerning. Our gaps are all under 0.015. ✅
 
-### Cell 24 (Code) — Logistic coefficients (Section 4a)
+### Cell 37 (Code) — Logistic coefficients (Section 4a)
 
 **How to read logistic regression coefficients:**
 
@@ -350,7 +383,7 @@ log(p / (1-p)) = w₀ + w₁x₁ + w₂x₂ + ...
 2. Sufficiently active (odds ratio 0.77)
 3. Higher income (odds ratio 0.73)
 
-### Cell 25 (Code) — Permutation importance
+### Cell 38 (Code) — Permutation importance
 
 **How it works:**
 
@@ -368,7 +401,7 @@ If shuffling a feature causes a big drop in AUC, that feature is important. If s
 
 ## Section 5 — CatBoost (Richer Features)
 
-### Cell 27 (Code) — Train CatBoost
+### Cell 40 (Code) — Train CatBoost
 
 **What is CatBoost?**
 
@@ -412,17 +445,17 @@ CatBoost requires:
 - No NaN in numeric columns → fill age NaN with median
 - Categorical NaN explicitly marked → replace NaN with the string `"missing"` (treated as a new category)
 
-### Cell 28 (Code) — Per-fold CV scores
+### Cell 41 (Code) — Per-fold CV scores
 
 Shows 5-fold CV scores for the CatBoost model. If one fold is much worse than others, it suggests instability. Here all 5 folds are within 0.78–0.80 → the model is stable.
 
-### Cell 29 (Code) — CatBoost feature importance
+### Cell 42 (Code) — CatBoost feature importance
 
 CatBoost uses **PredictionValuesChange**: for each feature, sums the absolute changes in prediction values across all trees where that feature was used for splitting. Higher = more important.
 
 **Difference from permutation importance:** This is computed from the tree structure itself (no re-evaluation needed), making it fast but specific to tree-based models.
 
-### Cell 31 (Code) — Threshold sweep (Section 5a)
+### Cell 44 (Code) — Threshold sweep (Section 5a)
 
 **The math behind thresholds:**
 
@@ -446,7 +479,7 @@ prediction = 1 if p̂ ≥ t else 0
 
 ## Section 6 — Hyperparameter Tuning
 
-### Cell 33 (Code) — Define configs
+### Cell 46 (Code) — Define configs
 
 Five CatBoost configurations exploring the regularisation-performance trade-off:
 
@@ -468,7 +501,7 @@ Total Loss = Logloss + λ × Σ(leaf_value²)
 
 Where `λ = l2_leaf_reg`. Larger λ → leaf values are shrunk toward zero → model is simpler and less likely to overfit. The sweep varies λ from 3 to 8 to find the optimal trade-off.
 
-### Cell 34 (Code) — CV helper function
+### Cell 47 (Code) — CV helper function
 
 ```python
 def cv_catboost(config, X, y):
@@ -485,7 +518,7 @@ Returns the **mean** across 3 folds.
 
 **Why 3-fold is OK here:** The sweep is for *relative* ranking of configs, not absolute performance estimation. 3-fold is sufficient to rank them reliably while cutting compute time by 40%.
 
-### Cell 35 (Code) — Run sweep
+### Cell 48 (Code) — Run sweep
 
 For each of the 5 configs:
 1. Run `cv_catboost()` → get CV scores (used for selection)
@@ -494,7 +527,7 @@ For each of the 5 configs:
 
 **Critical methodological point:** The configs are sorted by `cv_roc_auc`, not `test_roc_auc`. Selecting by test score is a form of **data dredging** — you're effectively using the test set for model selection, which inflates the reported performance.
 
-### Cell 37 (Code) — Pick winner (Section 6a)
+### Cell 50 (Code) — Pick winner (Section 6a)
 
 The `shallower_longer` config wins:
 - CV ROC-AUC: 0.7892
@@ -507,7 +540,7 @@ The `shallower_longer` config wins:
 
 ## Section 7 — Final Comparison
 
-### Cell 39 (Code) — Final scoreboard
+### Cell 52 (Code) — Final scoreboard
 
 | Model | Feature Set | Test ROC-AUC | Test PR-AUC | Notes |
 |---|---|---|---|---|
@@ -516,7 +549,7 @@ The `shallower_longer` config wins:
 | Random Forest | Baseline (11 features) | 0.7681 | 0.2736 | Slightly worse than LogReg |
 | Dummy | Baseline | 0.5000 | 0.1138 | Random baseline |
 
-### Cell 40 (Code) — Bar chart
+### Cell 53 (Code) — Bar chart
 
 Grouped bar chart showing CV vs. test ROC-AUC for all models. The dashed line at 0.5 marks random chance.
 
